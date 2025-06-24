@@ -5,14 +5,14 @@ import (
 )
 
 type State struct {
-	config *config.Config
+	Config *config.Config
 }
 
 type Command struct {
-	name string
-	args []string
+	Name string
+	Args []string
 }
 
 type Commands struct {
-	list map[string]func(*State, Command) error
+	List map[string]func(*State, Command) error
 }
