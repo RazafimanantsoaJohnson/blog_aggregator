@@ -6,10 +6,9 @@ import (
 )
 
 func HandlerLogin(state *State, cmd Command) error {
-	if len(cmd.Args) == 0 {
-		return fmt.Errorf("this command requires an argument")
+	if len(cmd.Args) == 0 || len(cmd.Args) > 1 {
+		return fmt.Errorf("this command requires one argument")
 	}
-	fmt.Printf("Received args for login: %v\n", cmd.Args)
 	err := state.Config.SetUser(cmd.Args[0])
 	if err != nil {
 		return err

@@ -12,7 +12,7 @@ func main() {
 	conf, err := config.Read()
 	if err != nil {
 		fmt.Errorf(err.Error())
-		return
+		os.Exit(1)
 	}
 	state := commands.State{
 		Config: &conf,
@@ -25,11 +25,15 @@ func main() {
 	//will turn into the REPL
 	receivedCmd, err := ReceiveCommandFromCLI()
 	if err != nil {
-		fmt.Errorf(err.Error())
-		return
+		fmt.Printf("an error happened: %v\n", err)
+		os.Exit(1)
 	}
-	cmds.Run(&state, receivedCmd)
+	err = cmds.Run(&state, receivedCmd)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
 	// cmds.Run(&state, commands.Command{Name: "login", Args: []string{"hello"}})
-	fmt.Println(conf)
-	fmt.Printf("Params: %v", os.Args[1:])
+	// fmt.Println(conf)
+	// fmt.Printf("Params: %v", os.Args[1:])
 }
