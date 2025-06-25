@@ -6,4 +6,4 @@ sql:
     engine: "postgresql"
     gen:
       go:
-        out: "bshit"
+        out: "internal/database"

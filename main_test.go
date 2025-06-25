@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/RazafimanantsoaJohnson/blog_aggregator/internal/commands"
+	"github.com/RazafimanantsoaJohnson/blog_aggregator/internal/database"
+	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 )
 
 func TestAddCommand(t *testing.T) {
@@ -61,6 +67,34 @@ func TestRunningCommand(t *testing.T) {
 		cmds.Run(nil, cm)
 		if result != c.expected {
 			t.Errorf("returned value: %v, expected value: %v", result, c.expected)
+			return
+		}
+	}
+}
+
+func TestRegister(t *testing.T) {
+	cases := []string{"johnson", "anotherguy", "shatyt"}
+	// db connection
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/gator")
+	if err != nil {
+		fmt.Println("error here")
+		t.Errorf(err.Error())
+		return
+	}
+	dbQueries := database.New(db)
+	for _, c := range cases {
+		createdUser, err := dbQueries.CreateUser(context.Background(), database.CreateUserParams{
+			ID:        uuid.New(),
+			Name:      c,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		})
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
+		if createdUser.Name != c {
+			t.Errorf("Inserted username: %v; created username: %v", c, createdUser.Name)
 			return
 		}
 	}
