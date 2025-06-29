@@ -54,5 +54,10 @@ func registerCmds() commands.Commands {
 	result.Register("register", commands.HandlerRegister)
 	result.Register("reset", commands.HandlerReset)
 	result.Register("users", commands.HandlerListUsers)
+	result.Register("agg", commands.HandlerAggregate)
+	result.Register("addfeed", commands.HandlerAddFeed)
+	result.Register("feeds", commands.HandlerListFeeds)
+	result.Register("follow", commands.HandlerFollow)
+	result.Register("following", commands.HandlerFollowing)
 	return result
 }
