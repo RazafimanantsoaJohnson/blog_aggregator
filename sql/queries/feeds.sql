@@ -7,3 +7,9 @@ SELECT feeds.name, feeds.url, users.name AS user_name FROM feeds INNER JOIN user
 
 -- name: GetFeedByURL :one
 SELECT * FROM feeds WHERE url= $1 LIMIT 1;
+
+-- name: MarkFeedFetched :one
+UPDATE feeds SET last_fetched= $2, updated_at= $3 WHERE id= $1 RETURNING * ;
+
+-- name: GetNextFeedToFetch :one
+SELECT * FROM feeds ORDER BY last_fetched ASC NULLS FIRST LIMIT 1;

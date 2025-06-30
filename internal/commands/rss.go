@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"html"
@@ -14,12 +15,7 @@ import (
 )
 
 func HandlerAggregate(s *State, cmd Command) error {
-	result, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return err
-	}
-	fmt.Println(*result)
-	return nil
+	return scrapeFeed(s)
 }
 
 func HandlerAddFeed(s *State, cmd Command, curUser database.User) error {
@@ -62,6 +58,31 @@ func HandlerListFeeds(s *State, cmd Command) error {
 		fmt.Printf("%v:\n", feed.Name)
 		fmt.Printf("\t%v\n", feed.Url)
 		fmt.Printf("\t%v\n", feed.UserName)
+	}
+	return nil
+}
+
+func scrapeFeed(s *State) error {
+	nextFeedToFetch, err := s.DbQueries.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		return err
+	}
+	fetchedFeed, err := fetchFeed(context.Background(), nextFeedToFetch.Url)
+	if err != nil {
+		return err
+	}
+	_, err = s.DbQueries.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
+		ID:          nextFeedToFetch.ID,
+		UpdatedAt:   time.Now(),
+		LastFetched: sql.NullTime{Valid: true, Time: time.Now()},
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("'%v' posts:\n", fetchedFeed.Channel.Title)
+	for _, item := range fetchedFeed.Channel.Item {
+		fmt.Printf("\t- '%v'\n", item.Title)
 	}
 	return nil
 }
