@@ -60,5 +60,6 @@ func registerCmds() commands.Commands {
 	result.Register("follow", middlewareLoggedIn(commands.HandlerFollow))
 	result.Register("following", middlewareLoggedIn(commands.HandlerFollowing))
 	result.Register("unfollow", middlewareLoggedIn(commands.HandlerUnfollow))
+	result.Register("browse", middlewareLoggedIn(commands.HandlerBrowse))
 	return result
 }

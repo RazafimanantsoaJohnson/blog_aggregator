@@ -8,14 +8,30 @@ import (
 	"html"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/RazafimanantsoaJohnson/blog_aggregator/internal/database"
 	"github.com/google/uuid"
 )
 
-func HandlerAggregate(s *State, cmd Command) error {
-	return scrapeFeed(s)
+func HandlerAggregate(s *State, cmd Command) error { // a command/function which might run forever (and it's OK because it is runned on specific intervals)
+	// will take a time duration string (ex: 3h4m20s63ms) and print our scraped feed in a loop.
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("this command expects an argument:\t'duration'(xhxxmxxs)\n")
+	}
+	durationBetweenRequests, err := time.ParseDuration(cmd.Args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Println("Collecting feeds every " + cmd.Args[0])
+	ticker := time.NewTicker(durationBetweenRequests) //creating the 'recurring event'
+	for ; ; <-ticker.C {
+		err = scrapeFeed(s)
+		if err != nil {
+			return err
+		}
+	}
 }
 
 func HandlerAddFeed(s *State, cmd Command, curUser database.User) error {
@@ -62,6 +78,26 @@ func HandlerListFeeds(s *State, cmd Command) error {
 	return nil
 }
 
+func HandlerBrowse(s *State, cmd Command, curUser database.User) error {
+	limit := 2
+	if len(cmd.Args) != 0 {
+		param, err := strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			return err
+		}
+		limit = param
+	}
+	curUserPosts, err := s.DbQueries.GetUserPosts(context.Background(), database.GetUserPostsParams{UserID: curUser.ID, Limit: int32(limit)})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%v posts: \n", curUser.Name)
+	for _, post := range curUserPosts {
+		fmt.Printf("\t- %v, %v\n", post.Title, post.PublishedAt)
+	}
+	return nil
+}
+
 func scrapeFeed(s *State) error {
 	nextFeedToFetch, err := s.DbQueries.GetNextFeedToFetch(context.Background())
 	if err != nil {
@@ -80,8 +116,30 @@ func scrapeFeed(s *State) error {
 		return err
 	}
 
-	fmt.Printf("'%v' posts:\n", fetchedFeed.Channel.Title)
+	fmt.Printf("'%v' posts:\n", nextFeedToFetch.Name)
 	for _, item := range fetchedFeed.Channel.Item {
+		dateLayouts := []string{time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z, time.RFC850, time.RFC1123, time.RFC1123Z, time.RFC3339,
+			time.RFC3339Nano, time.Kitchen, time.Stamp, time.StampMicro, time.StampMilli, time.DateTime, time.DateOnly}
+		var pubDate time.Time
+		for _, layout := range dateLayouts {
+			pubDate, err = time.Parse(layout, item.PubDate)
+			if err == nil {
+				break
+			}
+		}
+		if err != nil {
+			fmt.Println("Unable to parse the publication date for post: " + item.PubDate)
+		}
+		s.DbQueries.CreatePost(context.Background(), database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: sql.NullString{Valid: true, String: item.Description},
+			PublishedAt: pubDate,
+			FeedID:      nextFeedToFetch.ID,
+		})
 		fmt.Printf("\t- '%v'\n", item.Title)
 	}
 	return nil
