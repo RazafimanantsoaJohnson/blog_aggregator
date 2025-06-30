@@ -59,5 +59,6 @@ func registerCmds() commands.Commands {
 	result.Register("addfeed", middlewareLoggedIn(commands.HandlerAddFeed))
 	result.Register("follow", middlewareLoggedIn(commands.HandlerFollow))
 	result.Register("following", middlewareLoggedIn(commands.HandlerFollowing))
+	result.Register("unfollow", middlewareLoggedIn(commands.HandlerUnfollow))
 	return result
 }

@@ -46,3 +46,18 @@ func HandlerFollowing(s *State, cmd Command, curUser database.User) error {
 	}
 	return nil
 }
+
+func HandlerUnfollow(s *State, cmd Command, curUser database.User) error {
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("this command requires 1 argument:\t'feedUrl'")
+	}
+	err := s.DbQueries.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+		UserID: curUser.ID,
+		Url:    cmd.Args[0],
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("User: %v, officially unfollow the %v feed.\n", curUser.Name, cmd.Args[0])
+	return nil
+}
