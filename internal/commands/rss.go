@@ -22,13 +22,9 @@ func HandlerAggregate(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerAddFeed(s *State, cmd Command) error {
+func HandlerAddFeed(s *State, cmd Command, curUser database.User) error {
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("this command requires 2 arguments: name, url \n")
-	}
-	curUser, err := s.DbQueries.GetUser(context.Background(), s.Config.CurUser)
-	if err != nil {
-		return err
 	}
 	createdFeed, err := s.DbQueries.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        uuid.New(),

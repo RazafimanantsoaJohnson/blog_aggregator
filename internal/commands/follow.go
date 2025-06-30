@@ -9,13 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandlerFollow(s *State, cmd Command) error {
+func HandlerFollow(s *State, cmd Command, curUser database.User) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("this command require 1 argument:\t url")
-	}
-	curUser, err := s.DbQueries.GetUser(context.Background(), s.Config.CurUser)
-	if err != nil {
-		return err
 	}
 	chosenFeed, err := s.DbQueries.GetFeedByURL(context.Background(), cmd.Args[0])
 	if err != nil {
@@ -39,11 +35,7 @@ func HandlerFollow(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerFollowing(s *State, cmd Command) error {
-	curUser, err := s.DbQueries.GetUser(context.Background(), s.Config.CurUser)
-	if err != nil {
-		return err
-	}
+func HandlerFollowing(s *State, cmd Command, curUser database.User) error {
 	allFollows, err := s.DbQueries.GetFeedFollowsForUser(context.Background(), curUser.ID)
 	if err != nil {
 		return err
